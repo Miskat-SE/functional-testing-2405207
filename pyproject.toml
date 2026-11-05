@@ -1,0 +1,32 @@
+[project]
+name = "functional-testing-2405207"
+version = "1.0.0"
+description = "Functional tests, CI/CD and live deployment for target.py"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+# Lets a plain `pytest` (not only `python -m pytest`) import target.py and app.py.
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+source = ["target"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# target.py is provided by the instructor and must not be modified, so only
+# real errors (pyflakes "F" and bugbear "B") are enforced on it, not style.
+"target.py" = ["E", "W", "I"]
