@@ -1,6 +1,7 @@
 name: CI
 
-# Lint and test every push and every pull request to main.
+# Push-to-live pipeline: test -> (gate) -> deploy -> smoke-test.
+# Only code that passes every test on every Python version reaches the live site.
 on:
   push:
   pull_request:
@@ -8,6 +9,11 @@ on:
 
 permissions:
   contents: read
+
+env:
+  # Public URL of the Render service. Override with a repository variable
+  # named LIVE_URL if Render gave the service a different address.
+  LIVE_URL: ${{ vars.LIVE_URL || 'https://functional-testing-2405207.onrender.com' }}
 
 jobs:
   test:
@@ -61,3 +67,57 @@ jobs:
             junit-${{ matrix.python-version }}.xml
           if-no-files-found: error
           retention-days: 30
+
+  deploy:
+    # The gate: runs only when every test job passed, and only for pushes to main.
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: production
+      url: ${{ env.LIVE_URL }}
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Trigger the Render deploy hook for this exact commit
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::The RENDER_DEPLOY_HOOK_URL secret is not set."
+            exit 1
+          fi
+          status=$(curl --silent --show-error --output response.json \
+            --write-out '%{http_code}' --request POST \
+            "${RENDER_DEPLOY_HOOK_URL}&ref=${GITHUB_SHA}")
+          echo "Render responded with HTTP ${status}"
+          cat response.json; echo
+          case "$status" in
+            200|201|202) echo "Deploy of ${GITHUB_SHA} requested." ;;
+            *) echo "::error::Render rejected the deploy request."; exit 1 ;;
+          esac
+
+  smoke-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Wait for the new SHA on the live site, then check three live requests
+        run: >
+          python scripts/smoke_test.py
+          --url "$LIVE_URL"
+          --sha "$GITHUB_SHA"
+          --timeout 900
+          --interval 15

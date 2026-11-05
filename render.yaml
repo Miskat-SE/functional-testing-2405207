@@ -1,0 +1,16 @@
+# Render Blueprint for the live site. It mirrors the dashboard settings.
+# Auto-deploy is OFF: Render only deploys when the GitHub Actions "deploy" job
+# calls the deploy hook, and that job only runs after every test has passed.
+services:
+  - type: web
+    name: functional-testing-2405207
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --timeout 60
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    envVars:
+      - key: REPO_URL
+        value: https://github.com/Miskat-SE/functional-testing-2405207
