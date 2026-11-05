@@ -942,4 +942,4 @@ def test_average_overflow_characterises_current_behaviour():
 
 
 def test_divide_odd_numbers_returns_float():
-    assert target.divide(7, 2) == 3
+    assert target.divide(7, 2) == 3.5

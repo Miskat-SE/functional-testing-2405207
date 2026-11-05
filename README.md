@@ -82,7 +82,7 @@ ruff check .
 pytest --cov=target --cov-branch --cov-report=term-missing --cov-report=html --cov-fail-under=100
 ```
 
-Result: **423 tests pass** (378 for `target.py`, 45 for the web app) with **100% line and branch coverage** of `target.py` (59 statements, 26 branches) on Python 3.10, 3.11 and 3.12. There are no `skip`, `xfail` or other hidden failures.
+Result: **424 tests pass** (379 for `target.py`, 45 for the web app) with **100% line and branch coverage** of `target.py` (59 statements, 26 branches) on Python 3.10, 3.11 and 3.12. There are no `skip`, `xfail` or other hidden failures.
 
 Check that the tests catch faulty versions of `target.py` (mutation testing):
 
