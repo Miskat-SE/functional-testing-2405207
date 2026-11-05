@@ -939,3 +939,7 @@ def test_average_wrong_type_raises_type_error(numbers, fragment):
 def test_average_overflow_characterises_current_behaviour():
     # The true mean is 1e308, but the intermediate sum overflows to inf.
     assert target.average([1e308, 1e308]) == math.inf
+
+
+def test_divide_odd_numbers_returns_float():
+    assert target.divide(7, 2) == 3
