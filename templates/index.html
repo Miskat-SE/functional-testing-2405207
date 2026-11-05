@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>target.py Playground</title>
+  <meta name="description" content="Run every function in target.py and see its result or error.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <div>
+        <h1>target.py Playground</h1>
+        <p class="lede">Run any of the 16 functions with your own input and see the exact result, its type, or the exception it raises.</p>
+      </div>
+      <div class="health" id="health" aria-live="polite">
+        <span class="dot" id="health-dot"></span>
+        <span id="health-text">Checking /health…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="toolbar" aria-label="Filters">
+      <div class="filters" role="tablist">
+        <button class="filter active" data-filter="all" role="tab" aria-selected="true">All 16</button>
+        <button class="filter" data-filter="Data types" role="tab" aria-selected="false">Data types (11)</button>
+        <button class="filter" data-filter="Mathematics" role="tab" aria-selected="false">Mathematics (5)</button>
+      </div>
+      <button class="btn secondary" id="run-all" type="button">Run every example</button>
+    </section>
+
+    <p class="hint">Inputs are Python literals: <code>42</code>, <code>3.5</code>, <code>'text'</code>, <code>None</code>, <code>True</code>, <code>[1, 2]</code>, <code>(1, 2)</code>, <code>{1, 2}</code>, <code>{'apple': 1.25}</code>. Strings need quotes.</p>
+
+    <section class="grid" id="grid">
+      {% for spec in specs %}
+      <article class="card" data-function="{{ spec.name }}" data-category="{{ spec.category }}">
+        <header class="card-head">
+          <span class="num">{{ loop.index }}</span>
+          <h2><code>{{ spec.name }}({{ spec.params | join(', ') }})</code></h2>
+          <span class="tag">{{ spec.category }}</span>
+        </header>
+        <p class="summary">{{ spec.summary }}</p>
+        <form class="run-form" data-function="{{ spec.name }}" autocomplete="off">
+          {% for param in spec.params %}
+          <label>
+            <span>{{ param }}{% if param in spec.optional %} <em>(optional)</em>{% endif %}</span>
+            <input name="{{ param }}" type="text" spellcheck="false" maxlength="500"
+                   value="{{ spec.examples[0][1][loop.index0] }}" aria-label="{{ spec.name }} argument {{ param }}">
+          </label>
+          {% endfor %}
+          <div class="examples" aria-label="Examples">
+            {% for label, args in spec.examples %}
+            <button type="button" class="chip chip-{{ label | replace(' ', '-') }}"
+                    data-args='{{ args | tojson }}' title="{{ spec.name }}({{ args | join(', ') }})">
+              {{ label }}: {{ args | join(', ') }}
+            </button>
+            {% endfor %}
+          </div>
+          <button class="btn" type="submit">Run</button>
+        </form>
+        <output class="result" aria-live="polite"></output>
+      </article>
+      {% endfor %}
+    </section>
+
+    <section class="history" aria-label="Call history">
+      <div class="history-head">
+        <h2>Call history</h2>
+        <button class="btn ghost" id="clear-history" type="button">Clear</button>
+      </div>
+      <ol id="history-list"></ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-row">
+      <span>Deployed commit:
+        <a id="commit-link" href="{{ repo_url }}/commit/{{ commit }}" target="_blank" rel="noopener">
+          <code id="commit-sha" data-sha="{{ commit }}">{{ commit[:7] }}</code>
+        </a>
+      </span>
+      <span>Every push to <code>main</code> is tested on Python 3.10–3.12 before it goes live ·
+        <a href="{{ repo_url }}" target="_blank" rel="noopener">Source on GitHub</a> ·
+        <a href="/health" target="_blank">/health</a></span>
+    </div>
+  </footer>
+
+  <script>window.REPO_URL = {{ repo_url | tojson }};</script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
